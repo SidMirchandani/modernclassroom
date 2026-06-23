@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 248 250 252;
+    --foreground: 15 23 42;
+    --surface: 255 255 255;
+    --surface-2: 241 245 249;
+    --border: 226 232 240;
+    --muted: 100 116 139;
+  }
+
+  .dark {
+    --background: 10 10 14;
+    --foreground: 241 245 249;
+    --surface: 17 24 39;
+    --surface-2: 30 41 59;
+    --border: 51 65 85;
+    --muted: 148 163 184;
+  }
+
+  * {
+    @apply border-slate-200 dark:border-slate-700;
+  }
+
+  body {
+    @apply bg-slate-50 dark:bg-[#0a0a0e] text-slate-900 dark:text-slate-100 antialiased;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
