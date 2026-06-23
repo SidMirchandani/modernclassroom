@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { UNIT, STUDENTS } from "@/lib/data";
 import { getTeacherSectionStatus } from "@/lib/progress";
 import {
   approvePracticeSubmission,
   loadClassProgress,
 } from "@/lib/progress-store";
+import {
+  getProgressBlockSectionId,
+  setProgressBlockSectionId,
+  PROGRESS_BLOCK_CHANGE_EVENT,
+} from "@/lib/progress-block-store";
+import { TableProgressGate } from "./TableProgressGate";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/Logo";
 import { Modal } from "@/components/Modal";
@@ -89,12 +95,25 @@ export function TeacherDashboard() {
   const [highlightStatus, setHighlightStatus] = useState<OverallStatus | null>(null);
   const [openModal, setOpenModal] = useState<StatModal>(null);
   const [reviewTarget, setReviewTarget] = useState<ReviewTarget>(null);
+  const [blockSectionId, setBlockSectionId] = useState(
+    () => UNIT.sections[UNIT.sections.length - 1].id
+  );
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const sectionColumnRefs = useRef<(HTMLTableCellElement | null)[]>([]);
 
   useEffect(() => {
     setClassProgress(loadClassProgress());
-    const refresh = () => setClassProgress(loadClassProgress());
+    setBlockSectionId(getProgressBlockSectionId());
+    const refresh = () => {
+      setClassProgress(loadClassProgress());
+      setBlockSectionId(getProgressBlockSectionId());
+    };
     window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
+    window.addEventListener(PROGRESS_BLOCK_CHANGE_EVENT, refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener(PROGRESS_BLOCK_CHANGE_EVENT, refresh);
+    };
   }, []);
 
   const handleApprove = useCallback(() => {
@@ -157,6 +176,15 @@ export function TeacherDashboard() {
     ? reviewProgress?.sections[reviewTarget.sectionId]?.practiceProofUrl
     : undefined;
 
+  const blockIndex = UNIT.sections.findIndex((s) => s.id === blockSectionId);
+  const gateActive =
+    blockIndex >= 0 && blockIndex < UNIT.sections.length - 1;
+
+  const handleBlockChange = useCallback((sectionId: string) => {
+    setProgressBlockSectionId(sectionId);
+    setBlockSectionId(sectionId);
+  }, []);
+
   if (classProgress.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0a0a0e]">
@@ -167,7 +195,7 @@ export function TeacherDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0a0a0e]">
-      <header className="sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-5 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -266,17 +294,27 @@ export function TeacherDashboard() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
-          <div className="overflow-x-auto">
+        <div>
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden isolate">
+          <div ref={tableScrollRef} className="relative overflow-x-auto">
+            <TableProgressGate
+              blockSectionId={blockSectionId}
+              onChange={handleBlockChange}
+              containerRef={tableScrollRef}
+              columnRefs={sectionColumnRefs}
+            />
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 w-36 sticky left-0 bg-white dark:bg-slate-900">
+                  <th className="text-left px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 w-36 sticky left-0 z-10 bg-white dark:bg-slate-900">
                     Student
                   </th>
-                  {UNIT.sections.map((section) => (
+                  {UNIT.sections.map((section, sIdx) => (
                     <th
                       key={section.id}
+                      ref={(el) => {
+                        sectionColumnRefs.current[sIdx] = el;
+                      }}
                       className="text-center px-2 py-3 font-semibold text-slate-500 dark:text-slate-400 min-w-[80px]"
                     >
                       <div>{section.id}</div>
@@ -290,7 +328,7 @@ export function TeacherDashboard() {
                   </th>
                 </tr>
                 <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                  <td className="px-4 py-2 text-xs font-semibold text-slate-400 dark:text-slate-600 sticky left-0 bg-slate-50 dark:bg-slate-800/50">
+                  <td className="px-4 py-2 text-xs font-semibold text-slate-400 dark:text-slate-600 sticky left-0 z-10 bg-slate-50 dark:bg-slate-800/50">
                     Class avg
                   </td>
                   {classStats.map((stat) => (
@@ -333,7 +371,7 @@ export function TeacherDashboard() {
                     >
                       <td
                         className={cn(
-                          "px-4 py-3 sticky left-0",
+                          "px-4 py-3 sticky left-0 z-10",
                           idx % 2 === 0
                             ? "bg-white dark:bg-slate-900"
                             : "bg-slate-50/50 dark:bg-slate-900/50"
@@ -349,7 +387,7 @@ export function TeacherDashboard() {
                         </div>
                       </td>
 
-                      {UNIT.sections.map((section) => {
+                      {UNIT.sections.map((section, sIdx) => {
                         const status = studentProgress
                           ? getTeacherSectionStatus(studentProgress, section.id)
                           : ("not-started" as const);
@@ -357,9 +395,16 @@ export function TeacherDashboard() {
                           highlightStatus !== null && status !== highlightStatus;
                         const cfg = STATUS_CONFIG[status];
                         const isReview = status === "review";
+                        const beyondGate = gateActive && sIdx > blockIndex;
 
                         return (
-                          <td key={section.id} className="text-center px-2 py-3">
+                          <td
+                            key={section.id}
+                            className={cn(
+                              "text-center px-2 py-3",
+                              beyondGate && "bg-red-50/40 dark:bg-red-950/20"
+                            )}
+                          >
                             {isReview ? (
                               <button
                                 type="button"
@@ -424,6 +469,22 @@ export function TeacherDashboard() {
               </tbody>
             </table>
           </div>
+        </div>
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-600">
+          Drag the{" "}
+          <span className="text-red-500 dark:text-red-400">red line</span> to set how far
+          students can progress
+          {gateActive ? (
+            <>
+              {" "}
+              — currently open through{" "}
+              <span className="text-slate-500 dark:text-slate-500">{blockSectionId}</span>
+            </>
+          ) : (
+            " (fully open)"
+          )}
+          .
+        </p>
         </div>
 
         <div>

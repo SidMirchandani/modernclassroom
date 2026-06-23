@@ -10,18 +10,24 @@ interface Props {
   progress: StudentProgress;
   activeSectionId: string;
   onSelect: (id: string) => void;
+  className?: string;
 }
 
-export function SectionSidebar({ unit, progress, activeSectionId, onSelect }: Props) {
+export function SectionSidebarContent({
+  unit,
+  progress,
+  activeSectionId,
+  onSelect,
+}: Omit<Props, "className">) {
   return (
-    <aside className="w-56 shrink-0 border-r border-slate-200 dark:border-slate-800 py-4 sticky top-[97px] self-start max-h-[calc(100vh-97px)] overflow-y-auto no-scrollbar">
-      <div className="px-3 mb-3">
+    <>
+      <div className="px-2 mb-2">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-600">
           Sections
         </span>
       </div>
 
-      <nav className="space-y-0.5 px-2">
+      <nav className="space-y-0.5">
         {unit.sections.map((section) => {
           const status = getStudentSectionStatus(progress, section.id);
           const isActive = section.id === activeSectionId;
@@ -34,7 +40,7 @@ export function SectionSidebar({ unit, progress, activeSectionId, onSelect }: Pr
               disabled={!accessible}
               onClick={() => onSelect(section.id)}
               className={cn(
-                "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors",
+                "w-full flex items-start gap-2 px-2.5 py-2 rounded-lg text-left transition-colors",
                 !accessible && "opacity-50 cursor-not-allowed",
                 isActive
                   ? "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
@@ -44,10 +50,10 @@ export function SectionSidebar({ unit, progress, activeSectionId, onSelect }: Pr
               )}
             >
               <StatusIcon status={status} locked={!accessible} active={isActive} />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div
                   className={cn(
-                    "text-sm font-medium",
+                    "text-sm font-medium leading-tight",
                     isActive
                       ? "text-blue-700 dark:text-blue-300"
                       : accessible
@@ -57,7 +63,7 @@ export function SectionSidebar({ unit, progress, activeSectionId, onSelect }: Pr
                 >
                   {section.id}
                 </div>
-                <div className="text-xs text-slate-400 dark:text-slate-600 truncate leading-tight mt-0.5">
+                <div className="text-xs text-slate-400 dark:text-slate-600 leading-snug mt-0.5">
                   {section.title}
                 </div>
               </div>
@@ -66,16 +72,16 @@ export function SectionSidebar({ unit, progress, activeSectionId, onSelect }: Pr
         })}
       </nav>
 
-      <div className="px-3 mt-5 mb-2">
+      <div className="px-2 mt-4 mb-1.5">
         <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-600">
           Assessments
         </span>
       </div>
-      <div className="px-2 space-y-0.5">
+      <div className="space-y-0.5">
         {unit.quizzes.map((quiz) => (
           <div
             key={quiz.id}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-500"
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-500 dark:text-slate-500"
           >
             <Circle className="w-3.5 h-3.5 shrink-0" />
             <div className="min-w-0">
@@ -86,7 +92,7 @@ export function SectionSidebar({ unit, progress, activeSectionId, onSelect }: Pr
             </div>
           </div>
         ))}
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg">
+        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg">
           <Circle className="w-3.5 h-3.5 shrink-0 text-slate-400" />
           <div>
             <div className="text-sm font-medium text-slate-600 dark:text-slate-400">Unit Test</div>
@@ -94,6 +100,30 @@ export function SectionSidebar({ unit, progress, activeSectionId, onSelect }: Pr
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export function SectionSidebar({
+  unit,
+  progress,
+  activeSectionId,
+  onSelect,
+  className,
+}: Props) {
+  return (
+    <aside
+      className={cn(
+        "w-56 shrink-0 border-r border-slate-200 dark:border-slate-800 py-3 px-3 sticky top-[97px] self-start max-h-[calc(100vh-97px)] overflow-y-auto no-scrollbar",
+        className
+      )}
+    >
+      <SectionSidebarContent
+        unit={unit}
+        progress={progress}
+        activeSectionId={activeSectionId}
+        onSelect={onSelect}
+      />
     </aside>
   );
 }
@@ -108,25 +138,25 @@ function StatusIcon({
   active: boolean;
 }) {
   if (locked) {
-    return <Lock className="w-3 h-3 shrink-0 text-slate-300 dark:text-slate-700" />;
+    return <Lock className="w-3 h-3 shrink-0 text-slate-300 dark:text-slate-700 mt-0.5" />;
   }
   if (status === "complete") {
-    return <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-green-500" />;
+    return <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-green-500 mt-0.5" />;
   }
   if (status === "help") {
-    return <HelpCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />;
+    return <HelpCircle className="w-3.5 h-3.5 shrink-0 text-red-500 mt-0.5" />;
   }
   if (status === "in-progress") {
     return (
       <div
         className={cn(
-          "w-3.5 h-3.5 rounded-full border-2 shrink-0",
+          "w-3.5 h-3.5 rounded-full border-2 shrink-0 mt-0.5",
           active ? "border-blue-500" : "border-blue-400 dark:border-blue-600"
         )}
       />
     );
   }
   return (
-    <div className="w-3.5 h-3.5 rounded-full border-2 shrink-0 border-slate-300 dark:border-slate-700" />
+    <div className="w-3.5 h-3.5 rounded-full border-2 shrink-0 mt-0.5 border-slate-300 dark:border-slate-700" />
   );
 }

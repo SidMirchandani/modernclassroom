@@ -1,5 +1,10 @@
 import { UNIT } from "./data";
-import type { SectionActivityStatus, StudentProgress } from "./types";
+import { isBeyondProgressBlock } from "./progress-block-store";
+import type { ActivityStatus, SectionActivityStatus, StudentProgress } from "./types";
+
+export function isActivityFinished(status: ActivityStatus | undefined): boolean {
+  return status === "done" || status === "help";
+}
 
 export function isSectionComplete(
   sectionProgress: SectionActivityStatus | undefined
@@ -25,12 +30,13 @@ export function canAccessSection(
 ): boolean {
   const idx = UNIT.sections.findIndex((s) => s.id === sectionId);
   if (idx < 0) return false;
+  if (isBeyondProgressBlock(sectionId)) return false;
   if (idx === 0) return true;
 
   for (let i = 0; i < idx; i++) {
     const prevId = UNIT.sections[i].id;
     const prev = progress.sections[prevId];
-    if (!isSectionComplete(prev) || sectionHasHelp(prev)) {
+    if (!prev || !isActivityFinished(prev.learn) || !isActivityFinished(prev.practice)) {
       return false;
     }
   }
@@ -83,12 +89,12 @@ export function normalizeProgress(progress: StudentProgress): StudentProgress {
       base.learn === "locked" ? "available" : base.learn;
 
     const practice =
-      learn === "done" && base.practice === "locked"
+      isActivityFinished(learn) && base.practice === "locked"
         ? "available"
         : base.practice;
 
     const extra =
-      practice === "done" && base.extra === "locked"
+      isActivityFinished(practice) && base.extra === "locked"
         ? "available"
         : base.extra;
 

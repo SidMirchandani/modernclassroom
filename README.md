@@ -2,22 +2,25 @@
 
 A modern, self-paced learning dashboard for students and teachers. Built with Next.js, TypeScript, and Tailwind CSS.
 
-Students work through unit sections at their own pace — completing Learn, Practice, and Extra Material in order, uploading proof of work, and flagging when they need help. Teachers get a live progress grid with review workflows for submitted screenshots.
+Students work through unit sections at their own pace — completing Learn, Practice, and Extra Material in order, uploading proof of work, and updating their status as they go. Teachers get a live progress grid, a draggable progress gate to control how far the class can move, and review workflows for submitted screenshots.
 
-**Demo mode** — no backend or login required. Progress is stored in the browser via `localStorage`.
+**Demo mode** — no backend or login required. Progress and the teacher progress gate are stored in the browser via `localStorage`.
 
 ## Features
 
 ### Student view
-- Unit and section navigation with the current section highlighted
+- Unit banner and section navigation (sidebar on desktop, bottom sheet on mobile)
 - Sequential unlock: Learn → Practice → Extra Material
-- Practice requires a screenshot upload before marking complete
-- "I Need Help" blocks progression until resolved
+- Status badge on each activity card (top-right dropdown): **In Progress**, **Done**, **Help Requested**, or **Locked**
+- Practice requires a screenshot upload before marking Done
+- Help requests do not block moving to the next activity or section
+- Teacher progress gate limits access to sections beyond the gated point
 - Light and dark mode
 
 ### Teacher view
 - Class progress table with status per student and section
 - Status types: **Done**, **Review** (yellow), **Active**, **Help** (red), not started
+- **Progress gate** — draggable red line on the progress table; students cannot access sections past the gate
 - Click **Review** to view a student's submitted screenshot and approve it
 - Stat cards with detail modals (enrolled students, help requests, progress breakdown)
 - Section breakdown charts
@@ -62,16 +65,22 @@ Open [http://localhost:3000](http://localhost:3000).
 ```
 app/                  # Next.js routes (home, student, teacher)
 components/           # UI components
-  student/            # Student dashboard
-  teacher/            # Teacher dashboard
-lib/                  # Types, demo data, progress logic, localStorage store
+  student/            # Student dashboard, activity cards, sidebar
+  teacher/            # Teacher dashboard, progress gate overlay
+lib/                  # Types, demo data, progress logic, localStorage stores
 public/               # Static assets (Logo.png, favicons)
 scripts/              # Utility scripts
 ```
 
 ## Demo data
 
-The app ships with demo students and progress for **Unit 3: Linear Models and Systems** (sections 3.1–3.7). Switch between students on the student view to see different progress states.
+The app ships with eight demo students and progress for **Unit 3: Linear Models and Systems** (sections 3.1–3.7). No student has completed work past **3.4** in the seed data. The default progress gate is also set to **3.4** — drag the red line on the teacher table to open more sections.
+
+Switch between students on the student view to see different progress states.
+
+### Resetting demo state
+
+Progress is persisted in `localStorage` under `modern-classroom-progress`. The progress gate uses `modern-classroom-progress-block`. Clear those keys in devtools (or use a fresh/incognito window) to reload the seed data.
 
 ## License
 

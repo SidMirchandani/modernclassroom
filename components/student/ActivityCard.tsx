@@ -1,8 +1,17 @@
 "use client";
 
-import { useState, useRef, type ReactNode } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import type { ActivityStatus } from "@/lib/types";
-import { Lock, CheckCircle2, HelpCircle, Upload, X, Image } from "lucide-react";
+import {
+  Lock,
+  CheckCircle2,
+  HelpCircle,
+  Upload,
+  X,
+  Image,
+  ChevronDown,
+  Clock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -15,36 +24,176 @@ interface Props {
   children: ReactNode;
   requiresProof?: boolean;
   proofUrl?: string;
-  onDone: (proofUrl?: string) => void;
-  onHelp: () => void;
+  onStatusChange: (status: "available" | "done" | "help", proofUrl?: string) => void;
 }
 
 const colorMap = {
   blue: {
-    badge: "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300",
     icon: "text-blue-600 dark:text-blue-400",
     iconBg: "bg-blue-100 dark:bg-blue-900",
-    done: "bg-blue-600 hover:bg-blue-700 text-white",
     border: "border-slate-200 dark:border-slate-800",
     header: "border-blue-100 dark:border-blue-900/50",
   },
   violet: {
-    badge: "bg-violet-50 dark:bg-violet-950 border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-300",
     icon: "text-violet-600 dark:text-violet-400",
     iconBg: "bg-violet-100 dark:bg-violet-900",
-    done: "bg-violet-600 hover:bg-violet-700 text-white",
     border: "border-slate-200 dark:border-slate-800",
     header: "border-violet-100 dark:border-violet-900/50",
   },
   amber: {
-    badge: "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300",
     icon: "text-amber-600 dark:text-amber-400",
     iconBg: "bg-amber-100 dark:bg-amber-900",
-    done: "bg-amber-500 hover:bg-amber-600 text-white",
     border: "border-slate-200 dark:border-slate-800",
     header: "border-amber-100 dark:border-amber-900/50",
   },
 };
+
+type DisplayStatus = "locked" | "in-progress" | "done" | "help";
+
+const STATUS_STYLES: Record<
+  DisplayStatus,
+  { label: string; classes: string; icon: ReactNode }
+> = {
+  locked: {
+    label: "Locked",
+    classes:
+      "bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-600 border border-slate-200 dark:border-slate-800",
+    icon: <Lock className="w-3 h-3" />,
+  },
+  "in-progress": {
+    label: "In Progress",
+    classes:
+      "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800",
+    icon: <Clock className="w-3 h-3" />,
+  },
+  done: {
+    label: "Done",
+    classes:
+      "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800",
+    icon: <CheckCircle2 className="w-3 h-3" />,
+  },
+  help: {
+    label: "Help Requested",
+    classes:
+      "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800",
+    icon: <HelpCircle className="w-3 h-3" />,
+  },
+};
+
+function toDisplayStatus(status: ActivityStatus): DisplayStatus {
+  if (status === "locked") return "locked";
+  if (status === "available") return "in-progress";
+  if (status === "done") return "done";
+  return "help";
+}
+
+function StatusDropdown({
+  displayStatus,
+  onSelect,
+  requiresProof,
+  hasProof,
+}: {
+  displayStatus: DisplayStatus;
+  onSelect: (status: "available" | "done" | "help") => void;
+  requiresProof?: boolean;
+  hasProof?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const style = STATUS_STYLES[displayStatus];
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  if (displayStatus === "locked") {
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full",
+          style.classes
+        )}
+      >
+        {style.icon}
+        {style.label}
+      </span>
+    );
+  }
+
+  const options: { value: "available" | "done" | "help"; label: string; disabled?: boolean }[] =
+    [];
+
+  if (displayStatus === "in-progress") {
+    options.push(
+      { value: "done", label: "Done", disabled: requiresProof && !hasProof },
+      { value: "help", label: "Help Requested" }
+    );
+  } else if (displayStatus === "done") {
+    options.push(
+      { value: "available", label: "In Progress" },
+      { value: "help", label: "Help Requested" }
+    );
+  } else {
+    options.push(
+      { value: "done", label: "Done", disabled: requiresProof && !hasProof },
+      { value: "available", label: "In Progress" }
+    );
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-opacity hover:opacity-80",
+          style.classes
+        )}
+      >
+        {style.icon}
+        {style.label}
+        <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden z-30">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              disabled={opt.disabled}
+              onClick={() => {
+                if (!opt.disabled) {
+                  onSelect(opt.value);
+                  setOpen(false);
+                }
+              }}
+              className={cn(
+                "w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left transition-colors",
+                opt.disabled
+                  ? "text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+              )}
+            >
+              {STATUS_STYLES[toDisplayStatus(opt.value === "available" ? "available" : opt.value)].icon}
+              {opt.label}
+            </button>
+          ))}
+          {requiresProof && !hasProof && displayStatus !== "done" && (
+            <p className="px-3 py-2 text-[10px] text-slate-400 dark:text-slate-600 border-t border-slate-100 dark:border-slate-800">
+              Upload proof to mark as Done
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ActivityCard({
   icon,
@@ -56,24 +205,25 @@ export function ActivityCard({
   children,
   requiresProof,
   proofUrl,
-  onDone,
-  onHelp,
+  onStatusChange,
 }: Props) {
   const [uploadedFile, setUploadedFile] = useState<string | null>(proofUrl ?? null);
   const [dragging, setDragging] = useState(false);
-  const [showConfirm, setShowConfirm] = useState<null | "done" | "help">(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const c = colorMap[color];
 
+  useEffect(() => {
+    if (proofUrl) setUploadedFile(proofUrl);
+  }, [proofUrl]);
+
+  const displayStatus = toDisplayStatus(status);
   const isDone = status === "done";
   const isHelp = status === "help";
-  const isCompleted = isDone || isHelp;
 
   const handleFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      const url = e.target?.result as string;
-      setUploadedFile(url);
+      setUploadedFile(e.target?.result as string);
     };
     reader.readAsDataURL(file);
   };
@@ -85,15 +235,9 @@ export function ActivityCard({
     if (file) handleFile(file);
   };
 
-  const handleMarkDone = () => {
-    if (requiresProof && !uploadedFile) return;
-    onDone(uploadedFile ?? undefined);
-    setShowConfirm(null);
-  };
-
-  const handleMarkHelp = () => {
-    onHelp();
-    setShowConfirm(null);
+  const handleStatusSelect = (next: "available" | "done" | "help") => {
+    if (next === "done" && requiresProof && !uploadedFile) return;
+    onStatusChange(next, next === "done" ? uploadedFile ?? undefined : undefined);
   };
 
   return (
@@ -104,53 +248,33 @@ export function ActivityCard({
         locked && "opacity-60"
       )}
     >
-      {/* Card Header */}
-      <div
-        className={cn(
-          "flex items-center gap-3 px-5 py-4 border-b",
-          c.header
-        )}
-      >
-        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", c.iconBg)}>
+      <div className={cn("flex items-center gap-3 px-5 py-4 border-b", c.header)}>
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", c.iconBg)}>
           <span className={c.icon}>{icon}</span>
         </div>
         <span className="font-semibold text-slate-900 dark:text-slate-100">{title}</span>
 
-        <div className="ml-auto flex items-center gap-2">
-          {locked && (
-            <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-600">
-              <Lock className="w-3.5 h-3.5" />
-              Locked
-            </span>
-          )}
-          {isDone && (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 px-2.5 py-1 rounded-full">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Done
-            </span>
-          )}
-          {isHelp && (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-2.5 py-1 rounded-full">
-              <HelpCircle className="w-3.5 h-3.5" />
-              Help Requested
-            </span>
-          )}
+        <div className="ml-auto shrink-0">
+          <StatusDropdown
+            displayStatus={displayStatus}
+            onSelect={handleStatusSelect}
+            requiresProof={requiresProof}
+            hasProof={!!uploadedFile}
+          />
         </div>
       </div>
 
-      {/* Card Body */}
       <div className="px-5 py-4">
         {locked ? (
           <p className="text-sm text-slate-400 dark:text-slate-600 flex items-center gap-2">
-            <Lock className="w-3.5 h-3.5" />
+            <Lock className="w-3.5 h-3.5 shrink-0" />
             {lockedMessage}
           </p>
         ) : (
           <div className="space-y-4">
             <div>{children}</div>
 
-            {/* Proof Upload */}
-            {requiresProof && !isCompleted && (
+            {requiresProof && !isDone && (
               <div>
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                   Proof of Completion
@@ -163,6 +287,7 @@ export function ActivityCard({
                       className="max-h-32 rounded-lg border border-slate-200 dark:border-slate-700 object-contain"
                     />
                     <button
+                      type="button"
                       onClick={() => setUploadedFile(null)}
                       className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-700"
                     >
@@ -171,7 +296,10 @@ export function ActivityCard({
                   </div>
                 ) : (
                   <div
-                    onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDragging(true);
+                    }}
                     onDragLeave={() => setDragging(false)}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
@@ -208,8 +336,7 @@ export function ActivityCard({
               </div>
             )}
 
-            {/* Proof Preview when completed */}
-            {requiresProof && isCompleted && uploadedFile && (
+            {requiresProof && isDone && uploadedFile && (
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <Image className="w-3 h-3" />
@@ -223,74 +350,9 @@ export function ActivityCard({
               </div>
             )}
 
-            {/* Action Buttons */}
-            {!isCompleted && (
-              <div>
-                {showConfirm ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-500 dark:text-slate-400">
-                      {showConfirm === "done" ? "Mark as done?" : "Request help?"}
-                    </span>
-                    <button
-                      onClick={showConfirm === "done" ? handleMarkDone : handleMarkHelp}
-                      className="px-3 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium hover:opacity-80 transition-opacity"
-                    >
-                      Confirm
-                    </button>
-                    <button
-                      onClick={() => setShowConfirm(null)}
-                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowConfirm("done")}
-                      disabled={requiresProof && !uploadedFile}
-                      className={cn(
-                        "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                        requiresProof && !uploadedFile
-                          ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed"
-                          : c.done
-                      )}
-                      title={requiresProof && !uploadedFile ? "Upload proof to mark as done" : undefined}
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      Mark as Done
-                    </button>
-                    <button
-                      onClick={() => setShowConfirm("help")}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
-                    >
-                      <HelpCircle className="w-4 h-4" />
-                      I Need Help
-                    </button>
-                  </div>
-                )}
-                {requiresProof && !uploadedFile && (
-                  <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-600">
-                    Upload a screenshot to mark as done
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Redo option if already completed */}
-            {isCompleted && (
+            {isHelp && (
               <p className="text-xs text-slate-400 dark:text-slate-600">
-                {isDone ? "Marked as complete." : "Help requested — your teacher will follow up."}{" "}
-                {!requiresProof && (
-                  <button
-                    onClick={() => {
-                      // In a real app, this would reset the state
-                    }}
-                    className="underline hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
-                  >
-                    Undo
-                  </button>
-                )}
+                Help requested — your teacher will follow up. You can continue to the next step.
               </p>
             )}
           </div>

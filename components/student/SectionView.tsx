@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Section } from "@/lib/types";
 import type { SectionActivityStatus, ActivityStatus } from "@/lib/types";
+import { isActivityFinished } from "@/lib/progress";
 import { ActivityCard } from "./ActivityCard";
 import { CheckCircle2, BookOpen, PenLine, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,7 +15,7 @@ interface Props {
   onUpdateActivity: (
     sectionId: string,
     activity: "learn" | "practice" | "extra",
-    status: "done" | "help",
+    status: "available" | "done" | "help",
     proofUrl?: string
   ) => void;
 }
@@ -32,7 +33,7 @@ export function SectionView({
   const extraStatus = sectionProgress.extra ?? "locked";
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full">
       <div className="mb-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -93,8 +94,7 @@ export function SectionView({
           status={learnStatus}
           locked={learnStatus === "locked"}
           lockedMessage="Complete the previous section to unlock"
-          onDone={() => onUpdateActivity(section.id, "learn", "done")}
-          onHelp={() => onUpdateActivity(section.id, "learn", "help")}
+          onStatusChange={(status) => onUpdateActivity(section.id, "learn", status)}
         >
           <div className="space-y-2">
             <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -123,14 +123,15 @@ export function SectionView({
           status={practiceStatus}
           locked={practiceStatus === "locked"}
           lockedMessage={
-            learnStatus !== "done"
-              ? "Mark Learn as done to unlock Practice"
-              : "Complete Learn first"
+            !isActivityFinished(learnStatus)
+              ? "Complete Learn to unlock Practice"
+              : "Complete the previous section to unlock"
           }
           requiresProof
           proofUrl={sectionProgress.practiceProofUrl}
-          onDone={(proofUrl) => onUpdateActivity(section.id, "practice", "done", proofUrl)}
-          onHelp={() => onUpdateActivity(section.id, "practice", "help")}
+          onStatusChange={(status, proofUrl) =>
+            onUpdateActivity(section.id, "practice", status, proofUrl)
+          }
         >
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {section.practiceDescription}
@@ -143,9 +144,12 @@ export function SectionView({
           color="amber"
           status={extraStatus}
           locked={extraStatus === "locked"}
-          lockedMessage="Mark Practice as done to unlock extra resources"
-          onDone={() => onUpdateActivity(section.id, "extra", "done")}
-          onHelp={() => onUpdateActivity(section.id, "extra", "help")}
+          lockedMessage={
+            !isActivityFinished(practiceStatus)
+              ? "Complete Practice to unlock extra resources"
+              : "Complete the previous section to unlock"
+          }
+          onStatusChange={(status) => onUpdateActivity(section.id, "extra", status)}
         >
           <div className="space-y-2">
             <p className="text-sm text-slate-500 dark:text-slate-400">
