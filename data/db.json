@@ -1,0 +1,53 @@
+{
+  "users": [
+    {
+      "email": "teacher@test.com",
+      "username": "DoeJ",
+      "passwordHash": "$2b$10$W9qLsPg09qoWoHb.IdUQkeIiMXK1UZraw7tBxKLm6qLLNMtHE9.Ji",
+      "role": "teacher",
+      "firstName": "Jane",
+      "lastName": "Doe",
+      "id": "ff9e0766-aa27-4be3-aecf-93b8e3c9f7ad",
+      "createdAt": "2026-06-24T19:11:13.089Z"
+    },
+    {
+      "email": "alex@test.com",
+      "username": "ScottA",
+      "passwordHash": "$2b$10$QGbjnezy323ceHnl21/Su.i3XULKjhbtl889CggbNh8abN4lOv6Mu",
+      "role": "student",
+      "firstName": "Alex",
+      "lastName": "Scott",
+      "id": "83e8d12a-3094-4e03-93a3-6ad89965f952",
+      "createdAt": "2026-06-24T19:11:19.746Z"
+    }
+  ],
+  "classes": [
+    {
+      "id": "cca2c549-4877-4e3e-9903-9d6b6c5f1b09",
+      "name": "New Class",
+      "code": "666651",
+      "teacherId": "ff9e0766-aa27-4be3-aecf-93b8e3c9f7ad",
+      "units": [
+        {
+          "id": "8e44548d-9e37-4c6c-ad70-518fdbecb42d",
+          "title": "Unit 1",
+          "subunits": [
+            {
+              "id": "1.1",
+              "title": "Subunit 1.1",
+              "objectives": [],
+              "learnResources": [],
+              "practiceDescription": "",
+              "extraMaterials": []
+            }
+          ]
+        }
+      ],
+      "blockSectionId": null,
+      "createdAt": "2026-06-24T19:11:13.094Z"
+    }
+  ],
+  "enrollments": [],
+  "invites": [],
+  "progress": []
+}
