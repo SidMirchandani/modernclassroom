@@ -19,6 +19,26 @@
       "lastName": "Scott",
       "id": "83e8d12a-3094-4e03-93a3-6ad89965f952",
       "createdAt": "2026-06-24T19:11:19.746Z"
+    },
+    {
+      "email": "siddharth.mirchandani@gmail.com",
+      "username": "MirchandaniS",
+      "passwordHash": "$2b$10$CHhNeWpPTqaWmCKFq0LQYO9rUjS4TmiHRF23PFECiqYDDhIz.vmOu",
+      "role": "member",
+      "firstName": "Siddharth",
+      "lastName": "Mirchandani",
+      "id": "fab46742-96a6-4719-8e30-5ce8083eb245",
+      "createdAt": "2026-06-26T00:33:55.136Z"
+    },
+    {
+      "email": "privij.mirchandani@gmail.com",
+      "username": "MirchandaniV",
+      "passwordHash": "$2b$10$.KcPcFw9LDskqPXssvbLKuEwerJrzjMd0vcpLvy.A91fpSLAIwWLu",
+      "role": "member",
+      "firstName": "Vijay",
+      "lastName": "Mirchandani",
+      "id": "fa3fdd05-8ef9-4006-98a3-3c765334c9d0",
+      "createdAt": "2026-06-26T00:36:20.231Z"
     }
   ],
   "classes": [
@@ -36,18 +56,66 @@
               "id": "1.1",
               "title": "Subunit 1.1",
               "objectives": [],
-              "learnResources": [],
-              "practiceDescription": "",
-              "extraMaterials": []
+              "blocks": []
             }
           ]
         }
       ],
       "blockSectionId": null,
       "createdAt": "2026-06-24T19:11:13.094Z"
+    },
+    {
+      "id": "7c68cfb8-35fa-48c9-b5b3-2bc56a30a64c",
+      "name": "Precalculus",
+      "code": "810579",
+      "teacherId": "fab46742-96a6-4719-8e30-5ce8083eb245",
+      "units": [
+        {
+          "id": "635cb17f-b0ef-4f94-b8a2-3cf83da41e50",
+          "title": "Unit 1",
+          "subunits": [
+            {
+              "id": "1.1",
+              "title": "Subunit 1.1",
+              "objectives": [],
+              "blocks": []
+            }
+          ]
+        }
+      ],
+      "blockSectionId": null,
+      "createdAt": "2026-06-26T00:34:04.773Z"
+    },
+    {
+      "id": "205d069d-8ac6-45d4-8695-62d49108093a",
+      "name": "New Class",
+      "code": "185557",
+      "teacherId": "fa3fdd05-8ef9-4006-98a3-3c765334c9d0",
+      "units": [
+        {
+          "id": "8d2e6c4b-c612-4b52-b966-279fb30ebe57",
+          "title": "Unit 1",
+          "subunits": [
+            {
+              "id": "1.1",
+              "title": "Subunit 1.1",
+              "objectives": [],
+              "blocks": []
+            }
+          ]
+        }
+      ],
+      "blockSectionId": "1.1",
+      "createdAt": "2026-06-26T00:48:15.842Z"
     }
   ],
-  "enrollments": [],
+  "enrollments": [
+    {
+      "classId": "7c68cfb8-35fa-48c9-b5b3-2bc56a30a64c",
+      "studentId": "fa3fdd05-8ef9-4006-98a3-3c765334c9d0",
+      "joinedAt": "2026-06-26T00:36:24.003Z"
+    }
+  ],
   "invites": [],
   "progress": []
 }
